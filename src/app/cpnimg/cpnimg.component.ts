@@ -3,6 +3,7 @@ import {HttpEventType, HttpErrorResponse} from '@angular/common/http';
 import {of} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import { UploadService } from '../upload.service';
+import { ConsoleReporter } from 'jasmine';
 
 @Component({
   selector: 'app-cpnimg',
@@ -11,76 +12,72 @@ import { UploadService } from '../upload.service';
 })
 
 export class CpnimgComponent implements OnInit {
-  @ViewChild("fileUpload", {static: false}) fileUpload: ElementRef;
-  files = [];
+  // @ViewChild("fileUpload", {static: false}) fileUpload: ElementRef;
   
+  private filesUpload: File[];
+  private filesUrl: string[];
+
   constructor(private uploadService: UploadService) { }
 
   ngOnInit(): void {
   }
 
-  uploadFile(file) {
+  // uploadFile(file) {
 
-        var reader = new FileReader();
-        var imgContent;
+  //       var reader = new FileReader();
+  //       var imgContent;
 
-        reader.onload = () => {
-          // console.log(reader.result);
-          imgContent = reader.result;
-        }
-        reader.readAsText(file.data);
+  //       reader.onload = () => {
+  //         // console.log(reader.result);
+  //         imgContent = reader.result;
+  //       }
+  //       reader.readAsText(file.data);
 
-        const formData = new FormData(); 
-        console.log(file);
+  //     }
 
-        
+  //     private uploadFiles() {
+  //       this.fileUpload.nativeElement.value = '';
+  //       this.files.forEach(file => {
+  //         this.uploadFile(file);
+  //       })
+  //     }
+
+  onctrl() {
+    console.log(this.filesUrl);
     
-        formData.append('Image', imgContent, file.data.name ); 
-      
-        // formData.append('Image', file.data);    
-        file.inProgress = true;   
-        this.uploadService.upload(formData).pipe(   
-          map(event => {    
-            switch (event.type) {    
-              case HttpEventType.UploadProgress:  
-                 file.progress = Math.round(event.loaded * 100 / event.total);    
-                break;  
-              case HttpEventType.Response:    
-                return event;    
-            }    
-          }),    
-          catchError((error: HttpErrorResponse) => {
-             file.inProgress = false;
-            return of(`Upload failed: ${file.data.name}`); //${file.data.name}
-          })).subscribe((event: any) => {
-            if (typeof (event) === 'object') {
-              console.log('resultat :', event.body);  
-            }  
-          });  
-      }
+    var imgUrl = this.filesUrl[0];
+    var additionalImageUrls = this.filesUrl.slice(1);
 
-      private uploadFiles() {
-        this.fileUpload.nativeElement.value = '';
-        this.files.forEach(file => {
-          this.uploadFile(file);
-        })
-      }
+    console.log('imageUrl = ', imgUrl);
+    console.log('additionalImageUrl = ', additionalImageUrls);
 
-      onclickSV(event) {
-        event.target.files[0]
-      }
-      
-      onClick() {
-            const fileUpload = this.fileUpload.nativeElement;
-            fileUpload.onchange = () => {
-              for (let index = 0; index < fileUpload.files.length; index++)
-              {
-              const file = fileUpload.files[index];
-              this.files.push({ data: file, inProgress: false, progress: 0});
-              }
-                this.uploadFiles();
-            };
-            fileUpload.click();
-        }
 
+
+  }
+
+  onclick() {
+    console.log('longueur du tableau :', this.filesUpload.length);
+    this.filesUrl = new Array<string>();
+    if (this.filesUpload.length>0) {
+      for (let i=0; i<this.filesUpload.length; i++) {
+        console.log(this.filesUpload[i]);
+        this.uploadService.postFile(this.filesUpload[i]).subscribe((data)=>{
+          console.log('url :', data.url);
+          this.filesUrl.push(data.url)
+        });
+      }
+    }
+
+    
+
+  }
+
+  onChange(files: File[]) {
+    console.log('nbr de fichiers : ', files);
+    if (files.length>0) {
+      this.filesUpload = Array.from(files);
+    }
+     
+    // this.uploadService.postFile(event.target.files[0]).subscribe((data)=>console.log(data));
+  }
 }
